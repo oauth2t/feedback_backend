@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -34,6 +34,7 @@ app.post('/api/submit', (req, res) => {
     
     res.status(201).json({ message: 'Form submitted successfully', data: newEntry });
   } catch (error) {
+    console.error('Error in POST /api/submit:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -42,6 +43,7 @@ app.get('/api/data', (req, res) => {
   try {
     res.json(formEntries);
   } catch (error) {
+    console.error('Error in GET /api/data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -55,6 +57,7 @@ app.get('/api/data/:id', (req, res) => {
     }
     res.json(entry);
   } catch (error) {
+    console.error('Error in GET /api/data/:id:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -86,6 +89,7 @@ app.put('/api/data/:id', (req, res) => {
 
     res.json({ message: 'Entry updated successfully', data: formEntries[index] });
   } catch (error) {
+    console.error('Error in PUT /api/data/:id:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -105,11 +109,26 @@ app.delete('/api/data/:id', (req, res) => {
     
     res.json({ message: 'Entry deleted successfully' });
   } catch (error) {
+    console.error('Error in DELETE /api/data/:id:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use. Please try a different port.`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+    process.exit(1);
+  }
 }); 
